@@ -1,0 +1,29 @@
+# Ficheiros de log e dependências do Node.js (MUITO IMPORTANTE)
+# Estas pastas contêm milhares de ficheiros que são descarregados com "npm install".
+# Nunca devem ser enviados para o repositório.
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Ignorar a pasta completa do front-end, como pedido
+frontend/
+
+# Ficheiros de ambiente (contêm chaves de API e outras informações sensíveis)
+# Cada ambiente (desenvolvimento, produção) terá o seu próprio .env.
+.env
+
+# Ficheiros de base de dados SQLite
+# A estrutura da base de dados é guardada nas "migrations", não precisamos de guardar os dados de teste.
+*.sqlite3
+
+# Ficheiros de certificado SSL
+server.key
+server.cert
+
+# Ficheiros de sistema operacional (macOS e Windows)
+.DS_Store
+Thumbs.db
+
+# Ficheiros de IDEs e editores de código
+.vscode/
+.idea/
