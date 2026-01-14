@@ -37,3 +37,6 @@ Thumbs.db
 
 # Optional: Ignore source maps since your build had issues with them
 *.map
+
+server.key
+server.cert
