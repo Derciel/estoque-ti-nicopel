@@ -6,7 +6,7 @@ const AppLinkQRCode = () => {
   // MUDANÇA: Usamos window.location.origin para pegar a URL atual do site automaticamente.
   // Isso garante que funcione tanto no localhost quanto no Render sem precisar mudar código.
   const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
-  const appUrl = `${origin}/patrimonio`;
+  const appUrl = `${origin}/verificar`;
 
   return (
     <Box sx={{ p: 2, textAlign: 'center' }}>
