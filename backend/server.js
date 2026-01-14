@@ -20,7 +20,8 @@ const PORT = process.env.PORT || 10000;
 // 2. Permite localhost para que você ainda consiga testar no seu PC
 const allowedOrigins = [
   'https://estoque-ti-nicopel.onrender.com', // URL do seu frontend no Render
-  'http://localhost:3000'                  // Para testes locais
+  'http://localhost:3001',
+  'https://estoque-ti-nicopel-1.onrender.com'
 ];
 
 app.use(cors({
