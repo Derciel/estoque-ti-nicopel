@@ -3,8 +3,10 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Box, Typography } from '@mui/material';
 
 const AppLinkQRCode = () => {
-  // Altera o caminho para a página de patrimônio/estoque
-  const appUrl = `https://willingly-relieved-polliwog.ngrok-free.app/patrimonio`;
+  // MUDANÇA: Usamos window.location.origin para pegar a URL atual do site automaticamente.
+  // Isso garante que funcione tanto no localhost quanto no Render sem precisar mudar código.
+  const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
+  const appUrl = `${origin}/patrimonio`;
 
   return (
     <Box sx={{ p: 2, textAlign: 'center' }}>
@@ -13,7 +15,7 @@ const AppLinkQRCode = () => {
       <Typography variant="body2" sx={{ mt: 2 }}>
         Escaneie para abrir a página de visualização de estoque.
       </Typography>
-      <Typography variant="caption" color="text.secondary">
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, wordBreak: 'break-all' }}>
         {appUrl}
       </Typography>
     </Box>

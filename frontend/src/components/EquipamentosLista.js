@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useContext } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
 import { QRCodeCanvas } from 'qrcode.react';
 import { AppContext } from '../context/AppContext';
 import {
@@ -44,8 +45,17 @@ const EquipamentosLista = ({ onExcluir }) => {
   const [itemSelecionado, setItemSelecionado] = useState(null);
   const [selecionados, setSelecionados] = useState([]);
 
+  // Função auxiliar para corrigir URL da imagem no Render
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_URL || '';
+    return `${baseUrl}${url}`;
+  };
+
   useEffect(() => {
-    axios.get('/api/equipamentos')
+    // MUDANÇA 2: api.get
+    api.get('/api/equipamentos')
       .then(response => setEquipamentos(response.data))
       .catch(error => console.error('Erro ao buscar equipamentos:', error));
   }, [listaKey]);
@@ -76,7 +86,7 @@ const EquipamentosLista = ({ onExcluir }) => {
       });
     }
   };
-  
+
   const handleSelectAll = (event) => {
     if (event.target.checked) {
       const allIds = filteredEquipamentos.map(item => item.id);
@@ -130,13 +140,13 @@ const EquipamentosLista = ({ onExcluir }) => {
           </Typography>
         </Box>
       );
-      
+
       const root = createRoot(etiquetaElement);
       await new Promise(resolve => {
-          root.render(qrCodeComponent);
-          setTimeout(resolve, 50);
+        root.render(qrCodeComponent);
+        setTimeout(resolve, 50);
       });
-      
+
       const canvas = await html2canvas(etiquetaElement, { scale: 6 });
       const imgData = canvas.toDataURL('image/png');
 
@@ -145,9 +155,9 @@ const EquipamentosLista = ({ onExcluir }) => {
         x = margin;
         y = margin;
       }
-      
+
       pdf.addImage(imgData, 'PNG', x, y, etiquetaWidth, etiquetaHeight);
-      
+
       x += etiquetaWidth + 2;
       if (x + etiquetaWidth > pageW - margin) {
         x = margin;
@@ -156,7 +166,7 @@ const EquipamentosLista = ({ onExcluir }) => {
 
       root.unmount();
     }
-    
+
     document.body.removeChild(tempContainer);
     pdf.save('etiquetas-patrimonio.pdf');
     setSelecionados([]);
@@ -188,16 +198,16 @@ const EquipamentosLista = ({ onExcluir }) => {
     <Paper sx={{ p: 3, overflow: 'hidden' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', m: 0 }}>Inventário Geral de Patrimônio</Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<PictureAsPdfIcon />} 
+        <Button
+          variant="contained"
+          startIcon={<PictureAsPdfIcon />}
           onClick={handleExportarPDF}
           disabled={selecionados.length === 0}
         >
           Exportar ({selecionados.length}) Selecionado(s)
         </Button>
       </Box>
-      
+
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} sm={4}><Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}><Typography variant="body2" color="text.secondary">Total de Itens</Typography><Typography variant="h5" sx={{ fontWeight: 'bold' }}>{totalizadores.total}</Typography></Paper></Grid>
         <Grid item xs={6} sm={4}><Paper variant="outlined" sx={{ p: 2, textAlign: 'center', borderColor: 'success.main' }}><Typography variant="body2" color="text.secondary">Em Estoque</Typography><Typography variant="h5" sx={{ fontWeight: 'bold', color: 'success.main' }}>{totalizadores.emEstoque}</Typography></Paper></Grid>
@@ -250,10 +260,11 @@ const EquipamentosLista = ({ onExcluir }) => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Avatar 
-                      variant="rounded" 
-                      src={item.imagem_url ? item.imagem_url : '/placeholder.png'} 
-                      onClick={() => item.imagem_url && handleOpenImagemModal(item)} 
+                    <Avatar
+                      variant="rounded"
+                      // MUDANÇA: Usando getImageUrl para garantir que a imagem apareça
+                      src={getImageUrl(item.imagem_url) || '/placeholder.png'}
+                      onClick={() => item.imagem_url && handleOpenImagemModal(item)}
                       sx={{ cursor: item.imagem_url ? 'pointer' : 'default' }}
                     />
                   </TableCell>
@@ -261,7 +272,7 @@ const EquipamentosLista = ({ onExcluir }) => {
                   <TableCell>{item.nome_produto}</TableCell>
                   <TableCell>{item.codigo_produto}</TableCell>
                   <TableCell>{item.nome_usuario || '---'}</TableCell>
-                  <TableCell align="center"><Chip label={item.status} color={getStatusChipColor(item.status)} size="small" sx={{ fontWeight: 'bold' }}/></TableCell>
+                  <TableCell align="center"><Chip label={item.status} color={getStatusChipColor(item.status)} size="small" sx={{ fontWeight: 'bold' }} /></TableCell>
                   <TableCell align="center" sx={{ p: '4px' }}>
                     <Box sx={{ p: 0.5, backgroundColor: 'white', borderRadius: 1, display: 'inline-block' }}>
                       <QRCodeCanvas value={getQrCodeValue(item)} size={50} bgColor={"#ffffff"} fgColor={"#000000"} imageSettings={{ src: "/logo.png", height: 12, width: 12, excavate: true }} />
@@ -279,9 +290,9 @@ const EquipamentosLista = ({ onExcluir }) => {
       </TableContainer>
 
       <Dialog onClose={handleCloseImagemModal} open={imagemModalOpen} maxWidth="md">
-        {itemSelecionado && <img src={itemSelecionado.imagem_url} alt={itemSelecionado.nome_produto} style={{ width: '100%', height: 'auto' }} />}
+        {itemSelecionado && <img src={getImageUrl(itemSelecionado.imagem_url)} alt={itemSelecionado.nome_produto} style={{ width: '100%', height: 'auto' }} />}
       </Dialog>
-      
+
       <Dialog onClose={handleCloseEtiquetaModal} open={etiquetaModalOpen}>
         <DialogTitle>Etiqueta de Patrimônio</DialogTitle>
         <DialogContent sx={{ p: 3 }}>

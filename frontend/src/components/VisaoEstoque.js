@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
 
 // Removemos a prop 'onEditar'
 const VisaoEstoque = ({ listaKey }) => {
   const [estoque, setEstoque] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/estoque')
+    // MUDANÇA 2: Usamos api.get para buscar do backend correto
+    api.get('/api/estoque')
       .then(response => setEstoque(response.data))
       .catch(error => console.error("Erro ao buscar estoque:", error));
   }, [listaKey]); // Usamos a key para forçar a atualização

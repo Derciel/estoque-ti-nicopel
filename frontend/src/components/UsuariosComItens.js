@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
 import { AppContext } from '../context/AppContext';
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, ListItem, ListItemText, Avatar, Chip, CircularProgress } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -26,7 +27,8 @@ const UsuariosComItens = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios.get(`/api/usuarios/com-equipamentos`)
+    // MUDANÇA 2: Usamos api.get para buscar do backend correto
+    api.get(`/api/usuarios/com-equipamentos`)
       .then(response => {
         setDados(response.data);
         setLoading(false);
@@ -63,7 +65,7 @@ const UsuariosComItens = () => {
                   <Accordion key={nomeProduto} sx={{ backgroundImage: 'none', boxShadow: 'none', '&:before': { display: 'none' } }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography component="div" sx={{ fontWeight: 500 }}>
-                        {nomeProduto} 
+                        {nomeProduto}
                         <Chip label={`${itens.length} Unidade(s)`} size="small" sx={{ ml: 2 }} />
                       </Typography>
                     </AccordionSummary>
