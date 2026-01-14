@@ -12,7 +12,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({ origin: 'https://estoque-ti-nicopel.onrender.com' }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -24,5 +24,5 @@ app.use('/api/estoque', estoqueRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor backend rodando na porta http://10.1.1.85:${PORT}`);
+  console.log(`🚀 Servidor backend rodando na porta https://estoque-ti-nicopel.onrender.com:${PORT}`);
 });
