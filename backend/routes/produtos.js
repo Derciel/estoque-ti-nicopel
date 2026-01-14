@@ -21,8 +21,12 @@ const upload = multer({ storage: storage });
 // ROTA GET: Listar todos os produtos
 router.get('/', async (req, res) => {
   try {
-    // Usamos .select('*') para garantir que todos os campos da tabela são retornados
-    const produtos = await db('produtos').select('*').orderBy('id', 'asc');
+    let produtos = await db('produtos').select('*').orderBy('id', 'asc');
+    // Adiciona o URL completo a cada produto que tem uma imagem
+    produtos = produtos.map(p => ({
+      ...p,
+      imagem_url: p.imagem_url ? `${process.env.REACT_APP_API_URL}${p.imagem_url}` : null
+    }));
     res.json(produtos);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar produtos.' });

@@ -1,0 +1,24 @@
+/* Definição da fonte e fundo global da página */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #111827; /* Garante que o fundo seja sempre o do nosso tema escuro */
+}
+
+/* Mantemos apenas os estilos de "status" que são baseados em classes dinâmicas */
+.status.em-estoque {
+  background-color: #2e7d32 !important;
+  color: white !important;
+}
+
+.status.em-uso {
+  background-color: #ed6c02 !important;
+  color: white !important;
+}
+
+.status.manutenção {
+  background-color: #d32f2f !important;
+  color: white !important;
+}

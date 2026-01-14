@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database/db');
 
-// ROTA PARA OS CARTÕES (KPIs)
+// ROTA PARA OS CARTÕES (KPIs - Key Performance Indicators)
 router.get('/kpis', async (req, res) => {
-  // ... (esta rota está correta, sem alterações)
   try {
     const [totalEquipamentos] = await db('equipamentos').count('id as count');
     const [equipamentosAlocados] = await db('equipamentos').where('status', 'Em Uso').count('id as count');
@@ -18,15 +17,14 @@ router.get('/kpis', async (req, res) => {
       tiposDeProduto: totalProdutos.count,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar KPIs do dashboard.' });
+    console.error("Erro ao buscar KPIs:", error);
+    res.status(500).json({ message: 'Erro ao buscar KPIs.' });
   }
 });
 
-// ROTA PARA O GRÁFICO DE BARRAS (ITENS POR PRODUTO)
+// ROTA PARA O GRÁFICO (ITENS POR PRODUTO)
 router.get('/produtos-chart', async (req, res) => {
   try {
-    // A CORREÇÃO ESTÁ NESTA CONSULTA:
-    // Reescrita para ser mais explícita e compatível
     const resumo = await db('produtos')
       .leftJoin('equipamentos', 'produtos.id', 'equipamentos.produto_id')
       .select(
@@ -35,14 +33,28 @@ router.get('/produtos-chart', async (req, res) => {
         db.raw("SUM(CASE WHEN equipamentos.status = 'Em Estoque' THEN 1 ELSE 0 END) as disponivel")
       )
       .groupBy('produtos.nome')
-      .orderBy('total', 'desc')
-      .limit(7);
+      .orderBy('total', 'desc');
 
     res.json(resumo);
   } catch (error) {
-    console.error("Erro ao buscar dados do gráfico:", error);
+    console.error("Erro ao buscar dados para o gráfico:", error);
     res.status(500).json({ message: 'Erro ao buscar dados para o gráfico.' });
   }
+});
+
+// ROTA PARA A LISTA DE ITENS RECENTES
+router.get('/recentes', async (req, res) => {
+    try {
+        const recentes = await db('equipamentos')
+            .join('produtos', 'equipamentos.produto_id', 'produtos.id')
+            .select('equipamentos.id', 'produtos.nome', 'produtos.imagem_url', 'equipamentos.codigo_produto')
+            .orderBy('equipamentos.id', 'desc')
+            .limit(5);
+        res.json(recentes);
+    } catch (error) {
+        console.error("Erro ao buscar itens recentes:", error);
+        res.status(500).json({ message: 'Erro ao buscar itens recentes.' });
+    }
 });
 
 module.exports = router;
