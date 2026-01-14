@@ -1,14 +1,18 @@
-require('dotenv').config(); // Adiciona no topo aqui também
+require('dotenv').config();
+
+const config = {
+  client: process.env.DB_CLIENT || 'sqlite3',
+  connection: {
+    // Tenta ler o caminho do Disk (/data/dev.sqlite3), senão o local
+    filename: process.env.DB_CONNECTION_FILENAME || './dev.sqlite3'
+  },
+  useNullAsDefault: true,
+  migrations: {
+    directory: './database/migrations'
+  }
+};
 
 module.exports = {
-  development: {
-    client: process.env.DB_CLIENT, // Lê a variável do .env
-    connection: {
-      filename: process.env.DB_CONNECTION_FILENAME // Lê a variável do .env
-    },
-    useNullAsDefault: true,
-    migrations: {
-      directory: './database/migrations'
-    }
-  }
+  development: config,
+  production: config // Adicione esta linha para o Render
 };

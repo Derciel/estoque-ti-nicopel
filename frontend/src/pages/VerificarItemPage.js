@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import axios from 'axios';
+// MUDANÇA 1: Trocamos o axios puro pelo nosso serviço configurado
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import {
@@ -27,10 +28,10 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 
 // Função para definir o tamanho da caixa de leitura do QR Code
 const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
-    let minEdgePercentage = 0.7;
-    let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-    let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
-    return { width: qrboxSize, height: qrboxSize };
+  let minEdgePercentage = 0.7;
+  let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+  let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+  return { width: qrboxSize, height: qrboxSize };
 };
 
 const VerificarItemPage = () => {
@@ -48,7 +49,8 @@ const VerificarItemPage = () => {
 
   // Busca a lista de usuários UMA VEZ
   useEffect(() => {
-    axios.get('/api/usuarios')
+    // MUDANÇA 2: api.get
+    api.get('/api/usuarios')
       .then(response => {
         setUsuarios(response.data);
         if (response.data.length > 0) setSelectedUserId(response.data[0].id);
@@ -65,21 +67,21 @@ const VerificarItemPage = () => {
 
       const onScanSuccess = (decodedText) => {
         html5QrCode.stop().then(() => {
-            setShowScanner(false);
-            handleScan(decodedText);
+          setShowScanner(false);
+          handleScan(decodedText);
         }).catch(err => console.error("Falha ao parar o scanner.", err));
       };
 
       html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
         .catch(err => {
-            console.error("Não foi possível iniciar o scanner.", err);
-            setFeedback({error: "Não foi possível iniciar a câmara. Verifique as permissões.", success: ''});
-            setShowScanner(false);
+          console.error("Não foi possível iniciar o scanner.", err);
+          setFeedback({ error: "Não foi possível iniciar a câmara. Verifique as permissões.", success: '' });
+          setShowScanner(false);
         });
 
       return () => {
         if (scannerRef.current && scannerRef.current.isScanning) {
-            scannerRef.current.stop().catch(() => {});
+          scannerRef.current.stop().catch(() => { });
         }
       };
     }
@@ -96,11 +98,13 @@ const VerificarItemPage = () => {
     setLoading(true);
     clearState();
     try {
-      const response = await axios.get(`/api/equipamentos/por-codigo/${code}`);
+      // MUDANÇA 3: api.get
+      const response = await api.get(`/api/equipamentos/por-codigo/${code}`);
       setItemDetails(response.data);
 
       if (response.data.produto_id) {
-        const estoqueRes = await axios.get('/api/estoque');
+        // MUDANÇA 4: api.get
+        const estoqueRes = await api.get('/api/estoque');
         const info = estoqueRes.data.find(p => p.id === response.data.produto_id);
         setEstoqueInfo(info);
       }
@@ -128,7 +132,8 @@ const VerificarItemPage = () => {
   const handleAlocar = async () => {
     setLoading(true);
     try {
-      await axios.post(`/api/equipamentos/${itemDetails.id}/alocar`, { usuario_id: selectedUserId });
+      // MUDANÇA 5: api.post
+      await api.post(`/api/equipamentos/${itemDetails.id}/alocar`, { usuario_id: selectedUserId });
       setFeedback({ success: 'Item alocado com sucesso!', error: '' });
       forcarAtualizacaoGeral();
       await fetchItemDetailsByCode(itemDetails.codigo_produto);
@@ -141,7 +146,8 @@ const VerificarItemPage = () => {
   const handleDesalocar = async () => {
     setLoading(true);
     try {
-      await axios.post(`/api/equipamentos/${itemDetails.id}/desalocar`);
+      // MUDANÇA 6: api.post
+      await api.post(`/api/equipamentos/${itemDetails.id}/desalocar`);
       setFeedback({ success: 'Item devolvido ao estoque com sucesso!', error: '' });
       forcarAtualizacaoGeral();
       await fetchItemDetailsByCode(itemDetails.codigo_produto);
@@ -150,7 +156,7 @@ const VerificarItemPage = () => {
     }
     setLoading(false);
   };
-  
+
   const getStatusChipColor = (status) => {
     if (status === 'Em Uso') return 'warning';
     if (status === 'Manutenção') return 'error';
@@ -166,7 +172,7 @@ const VerificarItemPage = () => {
     <Box>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>Operações de Patrimônio</Typography>
       <Paper sx={{ p: 3, maxWidth: '700px', margin: 'auto', borderRadius: 4 }}>
-        
+
         {itemDetails ? (
           <Box>
             {feedback.error && <Alert severity="error" sx={{ mb: 2 }}>{feedback.error}</Alert>}
@@ -176,7 +182,7 @@ const VerificarItemPage = () => {
               <CardContent>
                 <Typography variant="h5" component="div" gutterBottom>{itemDetails.nome_produto}</Typography>
                 <Typography sx={{ mb: 1.5 }} color="text.secondary">Cód. Patrimônio: {itemDetails.codigo_produto}</Typography>
-                <Chip label={itemDetails.status} color={getStatusChipColor(itemDetails.status)} size="small" sx={{fontWeight: 'bold'}} />
+                <Chip label={itemDetails.status} color={getStatusChipColor(itemDetails.status)} size="small" sx={{ fontWeight: 'bold' }} />
                 {itemDetails.status === 'Em Uso' && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
                     <Avatar sx={{ bgcolor: 'warning.main' }}><PersonIcon /></Avatar>
@@ -188,18 +194,18 @@ const VerificarItemPage = () => {
 
             {estoqueInfo && (
               <Card variant="outlined" sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                      <Typography color="text.secondary" gutterBottom>Visão Geral do Produto</Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'info.main' }}><InventoryIcon/></Avatar>
-                        <Box>
-                          <Typography variant="body2">Disponível / Total em Estoque</Typography>
-                          <Typography variant="h6" component="p" sx={{ fontWeight: 'bold' }}>
-                            {estoqueInfo.em_estoque || 0} / {estoqueInfo.total}
-                          </Typography>
-                        </Box>
-                      </Box>
-                  </CardContent>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>Visão Geral do Produto</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: 'info.main' }}><InventoryIcon /></Avatar>
+                    <Box>
+                      <Typography variant="body2">Disponível / Total em Estoque</Typography>
+                      <Typography variant="h6" component="p" sx={{ fontWeight: 'bold' }}>
+                        {estoqueInfo.em_estoque || 0} / {estoqueInfo.total}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
               </Card>
             )}
 
@@ -214,13 +220,13 @@ const VerificarItemPage = () => {
                 </Box>
               )}
               {itemDetails.status === 'Em Uso' && (
-                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2}}>
-                    <Button variant="contained" color="warning" fullWidth onClick={handleDesalocar} disabled={loading}>Devolver ao Estoque</Button>
-                    <Button variant="outlined" fullWidth onClick={() => navigate('/patrimonio')}>Visualizar Lista de Patrimônio</Button>
-                 </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Button variant="contained" color="warning" fullWidth onClick={handleDesalocar} disabled={loading}>Devolver ao Estoque</Button>
+                  <Button variant="outlined" fullWidth onClick={() => navigate('/patrimonio')}>Visualizar Lista de Patrimônio</Button>
+                </Box>
               )}
             </Paper>
-            <Button variant="text" onClick={handleNewOperation} fullWidth sx={{mt: 2}}>Verificar Outro Item</Button>
+            <Button variant="text" onClick={handleNewOperation} fullWidth sx={{ mt: 2 }}>Verificar Outro Item</Button>
           </Box>
         ) : (
           <>
@@ -236,8 +242,8 @@ const VerificarItemPage = () => {
             {showScanner ? (
               <Box sx={{ position: 'relative' }}>
                 <div id="reader-verifier" style={{ borderRadius: '8px', overflow: 'hidden' }}></div>
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
                     boxShadow: 'inset 0 0 0 500px rgba(0,0,0,0.5)',
                     '&:after': {
@@ -257,7 +263,7 @@ const VerificarItemPage = () => {
             )}
           </>
         )}
-        
+
         {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}><CircularProgress /></Box>}
         {!itemDetails && feedback.error && <Alert severity="error" sx={{ mt: 2 }}>{feedback.error}</Alert>}
       </Paper>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos o api em vez do axios
+import api from '../services/api';
 import { v4 as uuidv4 } from 'uuid';
 import { QRCodeCanvas } from 'qrcode.react';
 import { AppContext } from '../context/AppContext';
@@ -26,10 +27,12 @@ const AdicionarEquipamento = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get('api/produtos')
+    // MUDANÇA 2: Usamos api.get com a URL correta (com barra no início)
+    api.get('/api/produtos')
       .then(response => {
         setProdutos(response.data);
         if (response.data.length > 0) {
+          // Define o primeiro produto como padrão para evitar select vazio
           setForm(prev => ({ ...prev, produto_id: response.data[0].id }));
         }
       })
@@ -65,12 +68,14 @@ const AdicionarEquipamento = () => {
     setLoading(true);
     setItemRecemCriado(null);
     try {
-      const response = await axios.post('/api/equipamentos', form);
+      // MUDANÇA 3: api.post para enviar para o backend correto
+      const response = await api.post('/api/equipamentos', form);
       setItemRecemCriado(response.data);
       setForm(prev => ({ ...prev, codigo_produto: '', numero_serie: '' }));
       forcarAtualizacaoGeral();
     } catch (error) {
       alert('Erro ao adicionar equipamento. Verifique se o código ou N/S já existe.');
+      console.error(error);
     }
     setLoading(false);
   };

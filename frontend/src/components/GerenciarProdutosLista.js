@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
 import { AppContext } from '../context/AppContext';
 import {
   Box,
@@ -15,7 +16,6 @@ import {
   Dialog,
   DialogContent,
   Paper,
-  Grid // Importação do Grid que estava em falta
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -27,9 +27,18 @@ const GerenciarProdutosLista = ({ onEditarProduto }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
 
+  // Função auxiliar para montar a URL da imagem corretamente no Render
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url; // Se já for completa, retorna ela
+    // Se for relativa, adiciona a base da API
+    const baseUrl = process.env.REACT_APP_API_URL || '';
+    return `${baseUrl}${url}`;
+  };
+
   useEffect(() => {
-    // Usa o caminho relativo para a API, que funcionará com o proxy
-    axios.get('/api/produtos')
+    // MUDANÇA 2: api.get
+    api.get('/api/produtos')
       .then(response => {
         setProdutos(response.data);
       })
@@ -39,8 +48,8 @@ const GerenciarProdutosLista = ({ onEditarProduto }) => {
   const handleExcluirProduto = async (produtoId) => {
     if (window.confirm('Tem certeza que deseja excluir este Tipo de Produto?')) {
       try {
-        // CORREÇÃO: Usa o caminho relativo para a API
-        const response = await axios.delete(`/api/produtos/${produtoId}`);
+        // MUDANÇA 3: api.delete
+        const response = await api.delete(`/api/produtos/${produtoId}`);
         alert(response.data.message);
         forcarAtualizacaoGeral();
       } catch (error) {
@@ -50,7 +59,7 @@ const GerenciarProdutosLista = ({ onEditarProduto }) => {
   };
 
   const handleOpenModal = (imageUrl) => {
-    setSelectedImage(imageUrl);
+    setSelectedImage(getImageUrl(imageUrl));
     setModalOpen(true);
   };
 
@@ -76,11 +85,11 @@ const GerenciarProdutosLista = ({ onEditarProduto }) => {
             {produtos && produtos.map(produto => (
               <TableRow key={produto.id} hover>
                 <TableCell>
-                  {/* CORREÇÃO: Usa o caminho relativo para a imagem */}
                   {produto.imagem_url && (
-                    <Avatar 
+                    <Avatar
                       variant="rounded"
-                      src={produto.imagem_url} 
+                      // Usamos a função auxiliar para garantir que a imagem apareça
+                      src={getImageUrl(produto.imagem_url)}
                       alt={produto.nome}
                       onClick={() => handleOpenModal(produto.imagem_url)}
                       sx={{ cursor: 'pointer' }}

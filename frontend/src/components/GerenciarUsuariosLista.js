@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
 import { Box, Typography, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -7,7 +8,8 @@ const GerenciarUsuariosLista = ({ onEditarUsuario, listaKey }) => {
   const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/usuarios')
+    // MUDANÇA 2: api.get para buscar do backend correto
+    api.get('/api/usuarios')
       .then(response => setUsuarios(response.data))
       .catch(error => console.error("Erro ao buscar usuários:", error));
   }, [listaKey]);

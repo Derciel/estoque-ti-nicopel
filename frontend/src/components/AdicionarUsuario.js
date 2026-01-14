@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
 import { AppContext } from '../context/AppContext';
 import { Box, Typography, TextField, Button, Alert } from '@mui/material';
 
@@ -26,20 +27,23 @@ const AdicionarUsuario = ({ usuarioParaEditar, onFinishEdit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFeedback({ error: '', success: '' }); // Limpa a mensagem antes de cada tentativa
-    
+
     const url = isEditing ? `/api/usuarios/${form.id}` : '/api/usuarios';
     const method = isEditing ? 'put' : 'post';
 
     try {
-      await axios[method](url, form);
+      // MUDANÇA 2: Usamos api[method] para garantir a URL base correta
+      await api[method](url, form);
+
       const successMessage = `Usuário ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso!`;
       setFeedback({ success: successMessage, error: '' });
-      
-      onFinishEdit();
+
+      // Se tivermos uma função de callback para finalizar a edição (limpar o form pai)
+      if (onFinishEdit) onFinishEdit();
+
       forcarAtualizacaoGeral();
 
     } catch (error) {
-      // AQUI ESTÁ A MELHORIA:
       // Verificamos se o erro tem uma resposta e uma mensagem específica do servidor
       if (error.response && error.response.data && error.response.data.message) {
         setFeedback({ error: error.response.data.message, success: '' });
@@ -49,8 +53,10 @@ const AdicionarUsuario = ({ usuarioParaEditar, onFinishEdit }) => {
       console.error('Erro ao salvar usuário:', error);
     }
   };
-  
-  const handleCancelEdit = () => onFinishEdit();
+
+  const handleCancelEdit = () => {
+    if (onFinishEdit) onFinishEdit();
+  };
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -64,7 +70,7 @@ const AdicionarUsuario = ({ usuarioParaEditar, onFinishEdit }) => {
 
       <TextField name="nome" label="Nome do Usuário" value={form.nome} onChange={handleChange} fullWidth required margin="normal" />
       <TextField name="matricula" label="Departamento" value={form.matricula} onChange={handleChange} fullWidth margin="normal" />
-      
+
       <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
         <Button type="submit" variant="contained" color="primary">{isEditing ? 'Salvar Alterações' : 'Cadastrar Usuário'}</Button>
         {isEditing && <Button variant="outlined" color="secondary" onClick={handleCancelEdit}>Cancelar</Button>}

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react'; // 1. Importar useContext
-import axios from 'axios';
-import { AppContext } from '../context/AppContext'; // 2. Importar o nosso Contexto
-import { Box, Typography, TextField, Button, Avatar, } from '@mui/material';
+import React, { useState, useEffect, useContext } from 'react';
+// MUDANÇA 1: Importamos api em vez de axios
+import api from '../services/api';
+import { AppContext } from '../context/AppContext';
+import { Box, Typography, TextField, Button, Avatar } from '@mui/material';
 
 const GerenciarProdutos = ({ produtoParaEditar, onFinishEdit }) => {
   const { forcarAtualizacaoGeral } = useContext(AppContext);
@@ -11,11 +12,25 @@ const GerenciarProdutos = ({ produtoParaEditar, onFinishEdit }) => {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-      if (produtoParaEditar) {
-        setForm(produtoParaEditar);
-        setIsEditing(true);
-        setPreview(produtoParaEditar.imagem_url ? `${process.env.REACT_APP_API_URL}${produtoParaEditar.imagem_url}` : null);
+    if (produtoParaEditar) {
+      setForm(produtoParaEditar);
+      setIsEditing(true);
+
+      // Lógica segura para exibir a imagem
+      if (produtoParaEditar.imagem_url) {
+        // Se a URL já vier completa do backend (começa com http), usa ela direto.
+        // Se não, adiciona o prefixo da API.
+        const apiUrl = process.env.REACT_APP_API_URL || '';
+        const imgUrl = produtoParaEditar.imagem_url.startsWith('http')
+          ? produtoParaEditar.imagem_url
+          : `${apiUrl}${produtoParaEditar.imagem_url}`;
+
+        setPreview(imgUrl);
       } else {
+        setPreview(null);
+      }
+
+    } else {
       setForm({ nome: '', marca: '', descricao: '', imagem_url: '' });
       setIsEditing(false);
       setPreview(null);
@@ -54,9 +69,11 @@ const GerenciarProdutos = ({ produtoParaEditar, onFinishEdit }) => {
       : '/api/produtos';
 
     try {
-      await axios[method](url, formData, {
+      // MUDANÇA 2: Usamos api[method] para garantir cabeçalhos e URL base corretos
+      await api[method](url, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
       onFinishEdit();
       forcarAtualizacaoGeral();
     } catch (error) {
