@@ -21,8 +21,6 @@ module.exports = {
     },
     migrations: {
       directory: './database/migrations'
-    },
-    // O Neon exige SSL
-    ssl: { rejectUnauthorized: false }
+    }
   }
 };
