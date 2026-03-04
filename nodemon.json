@@ -1,0 +1,6 @@
+{
+  "watch": ["server.js", "middleware", "routes", ".env"],
+  "ext": "js,json",
+  "ignore": ["frontend", "node_modules", "uploads"],
+  "exec": "node server.js"
+}
