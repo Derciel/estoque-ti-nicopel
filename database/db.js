@@ -1,13 +1,8 @@
 const knex = require('knex');
-const path = require('path');
+const knexConfig = require('../knexfile');
 
-const db = knex({
-    client: 'sqlite3',
-    connection: {
-        // Se existir a variável do Render, usa ela. Senão, usa o caminho local.
-        filename: process.env.DB_CONNECTION_FILENAME || path.resolve(__dirname, '../dev.sqlite3'),
-    },
-    useNullAsDefault: true,
-});
+// Define o ambiente (default = development)
+const environment = process.env.NODE_ENV || 'development';
+const db = knex(knexConfig[environment]);
 
 module.exports = db;

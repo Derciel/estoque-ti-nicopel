@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 router.get('/com-equipamentos', async (req, res) => {
   try {
     const usuarios = await db('usuarios').select('id', 'nome', 'matricula');
-    
+
     const equipamentosAlocados = await db('equipamentos')
       .where('status', 'Em Uso')
       .join('produtos', 'equipamentos.produto_id', 'produtos.id')
@@ -33,7 +33,7 @@ router.get('/com-equipamentos', async (req, res) => {
       );
       return { ...usuario, equipamentos: equipamentosDoUsuario };
     });
-    
+
     res.status(200).json(resultado);
   } catch (error) {
     console.error('Erro na rota /com-equipamentos:', error);
@@ -44,11 +44,19 @@ router.get('/com-equipamentos', async (req, res) => {
 // ROTA POST: Cadastrar um novo usuário
 router.post('/', async (req, res) => {
   try {
-    const [novoUsuario] = await db('usuarios').insert(req.body).returning('*');
-    res.status(201).json(novoUsuario);
+    let query = db('usuarios').insert(req.body);
+
+    if (db.client.config.client === 'pg') {
+      const [novoUsuario] = await query.returning('*');
+      return res.status(201).json(novoUsuario);
+    } else {
+      const [id] = await query;
+      const novoUsuario = await db('usuarios').where({ id }).first();
+      return res.status(201).json(novoUsuario);
+    }
   } catch (error) {
-    if (error.code === 'SQLITE_CONSTRAINT') {
-        return res.status(409).json({ message: 'A matrícula informada já existe.' });
+    if (error.code === 'SQLITE_CONSTRAINT' || error.code === '23505') {
+      return res.status(409).json({ message: 'A matrícula informada já existe.' });
     }
     res.status(500).json({ message: 'Erro ao cadastrar usuário.' });
   }
@@ -65,8 +73,8 @@ router.put('/:id', async (req, res) => {
       res.status(404).json({ message: 'Usuário não encontrado.' });
     }
   } catch (error) {
-     if (error.code === 'SQLITE_CONSTRAINT') {
-        return res.status(409).json({ message: 'A matrícula informada já pertence a outro usuário.' });
+    if (error.code === 'SQLITE_CONSTRAINT') {
+      return res.status(409).json({ message: 'A matrícula informada já pertence a outro usuário.' });
     }
     res.status(500).json({ message: 'Erro ao atualizar usuário.' });
   }

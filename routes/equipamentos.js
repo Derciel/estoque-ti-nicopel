@@ -50,7 +50,7 @@ router.get('/por-codigo/:codigo', async (req, res) => {
       .leftJoin('usuarios', 'equipamentos.usuario_id', 'usuarios.id') // Garante que a tabela de usuários é incluída
       .select('equipamentos.*', 'produtos.nome as nome_produto', 'usuarios.nome as nome_usuario') // Garante que o nome do usuário é selecionado
       .first();
-      
+
     if (equipamento) res.json(equipamento);
     else res.status(404).json({ message: 'Equipamento com este código não foi encontrado.' });
   } catch (error) {
@@ -65,10 +65,21 @@ router.post('/', async (req, res) => {
     if (numero_serie === '' || numero_serie === undefined) {
       numero_serie = null;
     }
-    const [novoEquipamento] = await db('equipamentos').insert({ codigo_produto, numero_serie, produto_id }).returning('*');
-    res.status(201).json(novoEquipamento);
+
+    let query = db('equipamentos').insert({ codigo_produto, numero_serie, produto_id });
+
+    if (db.client.config.client === 'pg') {
+      const [novoEquipamento] = await query.returning('*');
+      return res.status(201).json(novoEquipamento);
+    } else {
+      const [id] = await query;
+      const novoEquipamento = await db('equipamentos').where({ id }).first();
+      return res.status(201).json(novoEquipamento);
+    }
   } catch (error) {
-    if (error.code === 'SQLITE_CONSTRAINT') return res.status(409).json({ message: 'O código de patrimônio ou N/S informado já existe.' });
+    if (error.code === 'SQLITE_CONSTRAINT' || error.code === '23505') {
+      return res.status(409).json({ message: 'O código de patrimônio ou N/S informado já existe.' });
+    }
     res.status(500).json({ message: 'Ocorreu um erro inesperado.' });
   }
 });
@@ -86,8 +97,10 @@ router.post('/:id/alocar', async (req, res) => {
     const equipamento = await db('equipamentos').where({ id }).first();
     if (!equipamento) return res.status(404).json({ message: 'Equipamento não encontrado.' });
     if (equipamento.status !== 'Em Estoque') return res.status(409).json({ message: `Este equipamento já está "${equipamento.status}".` });
-    
-    const [equipamentoAtualizado] = await db('equipamentos').where({ id }).update({ usuario_id: usuario_id, status: 'Em Uso' }).returning('*');
+
+    await db('equipamentos').where({ id }).update({ usuario_id: usuario_id, status: 'Em Uso' });
+    const equipamentoAtualizado = await db('equipamentos').where({ id }).first();
+
     res.status(200).json({ message: 'Equipamento alocado com sucesso!', equipamento: equipamentoAtualizado });
   } catch (error) {
     res.status(500).json({ message: 'Erro interno no servidor ao tentar alocar.' });
@@ -102,7 +115,9 @@ router.post('/:id/desalocar', async (req, res) => {
     if (!equipamento) return res.status(404).json({ message: 'Equipamento não encontrado.' });
     if (equipamento.status !== 'Em Uso') return res.status(409).json({ message: 'Este equipamento não está em uso.' });
 
-    const [equipamentoAtualizado] = await db('equipamentos').where({ id }).update({ usuario_id: null, status: 'Em Estoque' }).returning('*');
+    await db('equipamentos').where({ id }).update({ usuario_id: null, status: 'Em Estoque' });
+    const equipamentoAtualizado = await db('equipamentos').where({ id }).first();
+
     res.status(200).json({ message: 'Equipamento devolvido ao estoque com sucesso!', equipamento: equipamentoAtualizado });
   } catch (error) {
     res.status(500).json({ message: 'Erro interno no servidor ao tentar desalocar.' });

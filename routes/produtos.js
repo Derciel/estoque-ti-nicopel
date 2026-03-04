@@ -3,18 +3,27 @@ const router = express.Router();
 const db = require('../database/db');
 const multer = require('multer');
 const path = require('path');
-// As importações do axios, form-data e fs não são mais necessárias aqui
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Configuração do Multer para guardar os ficheiros diretamente na pasta 'uploads'
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // A pasta onde as imagens serão guardadas
-  },
-  filename: function (req, file, cb) {
-    // Cria um nome de ficheiro único para evitar conflitos
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
+// Configuração condicional (Cloudinary se em produção, Local se em dev)
+let storage;
+
+if (process.env.NODE_ENV === 'production' && process.env.CLOUDINARY_URL) {
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'estoque-ti',
+      format: async (req, file) => 'webp',
+      public_id: (req, file) => `produto-${Date.now()}`
+    }
+  });
+} else {
+  storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`)
+  });
+}
 
 const upload = multer({ storage: storage });
 
@@ -29,30 +38,37 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ROTA POST: Cadastrar um novo produto com upload de imagem simples
+// ROTA POST: Cadastrar um novo produto
 router.post('/', upload.single('imagem'), async (req, res) => {
   const { nome, marca, descricao } = req.body;
-  // Se um ficheiro foi enviado, guarda o caminho dele, senão, guarda null.
-  const imagem_url = req.file ? `/uploads/${req.file.filename}` : null;
+  const imagem_url = req.file ? (req.file.path.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`) : null;
 
   try {
-    const [produto] = await db('produtos').insert({ nome, marca, descricao, imagem_url }).returning('*');
-    res.status(201).json(produto);
+    let query = db('produtos').insert({ nome, marca, descricao, imagem_url });
+
+    // SQLite não suporta .returning('*') em todas as versões. Postgres sim.
+    if (db.client.config.client === 'pg') {
+      const [produto] = await query.returning('*');
+      return res.status(201).json(produto);
+    } else {
+      const [id] = await query;
+      const produto = await db('produtos').where({ id }).first();
+      return res.status(201).json(produto);
+    }
   } catch (error) {
     console.error("Erro ao cadastrar produto:", error);
     res.status(500).json({ message: 'Erro ao cadastrar produto.' });
   }
 });
 
-// ROTA PUT: Atualizar um produto existente, com opção de nova imagem
+// ROTA PUT: Atualizar um produto existente
 router.put('/:id', upload.single('imagem'), async (req, res) => {
   const { id } = req.params;
   const { nome, marca, descricao } = req.body;
 
   const updateData = { nome, marca, descricao };
-  // Se um novo ficheiro for enviado na atualização, o seu caminho é adicionado
   if (req.file) {
-    updateData.imagem_url = `/uploads/${req.file.filename}`;
+    updateData.imagem_url = req.file.path.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`;
   }
 
   try {

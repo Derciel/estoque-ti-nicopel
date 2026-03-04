@@ -1,18 +1,28 @@
 require('dotenv').config();
 
-const config = {
-  client: process.env.DB_CLIENT || 'sqlite3',
-  connection: {
-    // Tenta ler o caminho do Disk (/data/dev.sqlite3), senão o local
-    filename: process.env.DB_CONNECTION_FILENAME || './dev.sqlite3'
-  },
-  useNullAsDefault: true,
-  migrations: {
-    directory: './database/migrations'
-  }
-};
-
 module.exports = {
-  development: config,
-  production: config // Adicione esta linha para o Render
+  development: {
+    client: 'sqlite3',
+    connection: {
+      filename: './dev.sqlite3'
+    },
+    useNullAsDefault: true,
+    migrations: {
+      directory: './database/migrations'
+    }
+  },
+
+  production: {
+    client: 'pg',
+    connection: process.env.DATABASE_URL,
+    pool: {
+      min: 2,
+      max: 10
+    },
+    migrations: {
+      directory: './database/migrations'
+    },
+    // O Neon exige SSL
+    ssl: { rejectUnauthorized: false }
+  }
 };
