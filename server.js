@@ -22,18 +22,19 @@ const allowedOrigins = [
   'https://estoque-ti-nicopel.onrender.com',
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://estoque-ti-nicopel-1.onrender.com'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // Permite solicitações sem origem (como aplicativos móveis ou solicitações curl)
+    // E permite subdomínios do onrender.com para maior flexibilidade
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
 

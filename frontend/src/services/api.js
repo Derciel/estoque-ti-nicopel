@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // O Render vai injetar a URL aqui se você configurou o REACT_APP_API_URL no painel
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001'
+    // Detecta automaticamente se está no Render ou Localhost
+    baseURL: window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001' 
+        : window.location.origin
 });
 
 export default api; 

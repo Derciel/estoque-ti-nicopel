@@ -80,4 +80,25 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+// ROTA DELETE: Excluir um usuário
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 1. Desalocar equipamentos que estão com este usuário (Postgres FK)
+    await db('equipamentos').where({ usuario_id: id }).update({ usuario_id: null, status: 'Em Estoque' });
+
+    // 2. Apagar o usuário
+    const rowsDeleted = await db('usuarios').where({ id }).del();
+    
+    if (rowsDeleted > 0) {
+      res.status(200).json({ message: 'Usuário excluído com sucesso.' });
+    } else {
+      res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+  } catch (error) {
+    console.error('Erro ao excluir usuário:', error);
+    res.status(500).json({ message: 'Erro interno ao excluir usuário.' });
+  }
+});
+
+module.exports = router;
