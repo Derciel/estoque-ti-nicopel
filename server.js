@@ -20,14 +20,15 @@ const PORT = process.env.PORT || 3001;
 
 const allowedOrigins = [
   'https://estoque-ti-nicopel.onrender.com',
+  'https://estoque-ti-nicopel-1.onrender.com',
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://estoque-ti-nicopel-1.onrender.com'
-];
+  process.env.RENDER_EXTERNAL_URL, // URL dinâmica do Render
+].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
